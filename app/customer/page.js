@@ -1,51 +1,38 @@
-// product.js
 "use client";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 
-export default function Home() {
+export default function CustomerPage() {
   const APIBASE = process.env.NEXT_PUBLIC_API_URL;
   const { register, handleSubmit, reset } = useForm();
-  const [products, setProducts] = useState([]);
-  const [category, setCategory] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [editMode, setEditMode] = useState(false);
 
-  const startEdit = (product) => () => {
+  const startEdit = (customer) => () => {
     setEditMode(true);
-    reset(product);
+    reset(customer);
   };
 
-  async function fetchProducts() {
+  async function fetchCustomers() {
     try {
-      const data = await fetch(`${APIBASE}/product`);
-      const p = await data.json();
-      const p2 = p.map((product) => {
-        product.id = product._id;
-        return product;
+      const response = await fetch(`${APIBASE}/customer`);
+      const data = await response.json();
+      const customersWithId = data.map((customer) => {
+        customer.id = customer._id;
+        return customer;
       });
-      setProducts(p2);
+      setCustomers(customersWithId);
     } catch (error) {
-      console.error("Failed to fetch products:", error);
-      alert("Failed to load products");
+      console.error("Failed to fetch customers:", error);
+      alert("Failed to load customers");
     }
   }
 
-  async function fetchCategory() {
-    try {
-      const data = await fetch(`${APIBASE}/category`);
-      const c = await data.json();
-      setCategory(c);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-      alert("Failed to load categories");
-    }
-  }
-
-  const createProductOrUpdate = async (data) => {
+  const createOrUpdateCustomer = async (data) => {
     if (editMode) {
       try {
-        const response = await fetch(`${APIBASE}/product`, {
+        const response = await fetch(`${APIBASE}/customer`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -54,28 +41,27 @@ export default function Home() {
         });
 
         if (!response.ok) {
-          alert(`Failed to update product: ${response.status}`);
+          alert(`Failed to update customer: ${response.status}`);
         } else {
-          alert("Product updated successfully");
+          alert("Customer updated successfully");
         }
 
         reset({
-          code: "",
           name: "",
-          description: "",
-          price: "",
-          category: "",
+          dateOfBirth: "",
+          memberNumber: "",
+          interests: "",
         });
         setEditMode(false);
-        fetchProducts();
+        fetchCustomers();
       } catch (error) {
-        console.error("Failed to update product:", error);
+        console.error("Failed to update customer:", error);
       }
       return;
     }
 
     try {
-      const response = await fetch(`${APIBASE}/product`, {
+      const response = await fetch(`${APIBASE}/customer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -87,18 +73,17 @@ export default function Home() {
         throw new Error(`Response status: ${response.status}`);
       }
 
-      alert("Product added successfully");
+      alert("Customer added successfully");
 
       reset({
-        code: "",
         name: "",
-        description: "",
-        price: "",
-        category: category[0]?._id || "", // Set to the first category by default
+        dateOfBirth: "",
+        memberNumber: "",
+        interests: "",
       });
-      fetchProducts();
+      fetchCustomers();
     } catch (error) {
-      alert(`Failed to add product: ${error.message}`);
+      alert(`Failed to add customer: ${error.message}`);
       console.error(error);
     }
   };
@@ -107,40 +92,30 @@ export default function Home() {
     if (!confirm("Are you sure?")) return;
 
     try {
-      const response = await fetch(`${APIBASE}/product/${id}`, {
+      const response = await fetch(`${APIBASE}/customer/${id}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        alert(`Failed to delete product: ${response.status}`);
+        alert(`Failed to delete customer: ${response.status}`);
       } else {
-        alert("Product deleted successfully");
-        fetchProducts();
+        alert("Customer deleted successfully");
+        fetchCustomers();
       }
     } catch (error) {
-      console.error("Failed to delete product:", error);
+      console.error("Failed to delete customer:", error);
     }
   };
 
   useEffect(() => {
-    fetchCategory();
-    fetchProducts();
+    fetchCustomers();
   }, []);
 
   return (
     <div className="flex flex-row gap-4">
       <div className="flex-1 w-64 ">
-        <form onSubmit={handleSubmit(createProductOrUpdate)}>
+        <form onSubmit={handleSubmit(createOrUpdateCustomer)}>
           <div className="grid grid-cols-2 gap-4 m-4 w-1/2">
-            <div>Code:</div>
-            <div>
-              <input
-                name="code"
-                type="text"
-                {...register("code", { required: true })}
-                className="border border-black w-full"
-              />
-            </div>
             <div>Name:</div>
             <div>
               <input
@@ -150,36 +125,32 @@ export default function Home() {
                 className="border border-black w-full"
               />
             </div>
-            <div>Description:</div>
-            <div>
-              <textarea
-                name="description"
-                {...register("description")}
-                className="border border-black w-full"
-              />
-            </div>
-            <div>Price:</div>
+            <div>Date of Birth:</div>
             <div>
               <input
-                name="price" // Corrected
-                type="number"
-                {...register("price", { required: true })}
+                name="dateOfBirth"
+                type="date"
+                {...register("dateOfBirth", { required: true })}
                 className="border border-black w-full"
               />
             </div>
-            <div>Category:</div>
+            <div>Member Number:</div>
             <div>
-              <select
-                name="category"
-                {...register("category", { required: true })}
+              <input
+                name="memberNumber"
+                type="number"
+                {...register("memberNumber", { required: true })}
                 className="border border-black w-full"
-              >
-                {category.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              />
+            </div>
+            <div>Interests:</div>
+            <div>
+              <input
+                name="interests"
+                type="text"
+                {...register("interests")}
+                className="border border-black w-full"
+              />
             </div>
             <div className="col-span-2">
               {editMode ? (
@@ -199,11 +170,10 @@ export default function Home() {
                 <button
                   onClick={() => {
                     reset({
-                      code: "",
                       name: "",
-                      description: "",
-                      price: "",
-                      category: category[0]?._id || "",
+                      dateOfBirth: "",
+                      memberNumber: "",
+                      interests: "",
                     });
                     setEditMode(false);
                   }}
@@ -217,20 +187,20 @@ export default function Home() {
         </form>
       </div>
       <div className="border m-4 bg-slate-300 flex-1 w-64">
-        <h1 className="text-2xl">Products ({products.length})</h1>
+        <h1 className="text-2xl">Customers ({customers.length})</h1>
         <ul className="list-disc ml-8">
-          {products.map((p) => (
-            <li key={p._id}>
-              <button className="border border-black p-1/2" onClick={startEdit(p)}>
+          {customers.map((c) => (
+            <li key={c._id}>
+              <button className="border border-black p-1/2" onClick={startEdit(c)}>
                 📝
               </button>{" "}
-              <button className="border border-black p-1/2" onClick={deleteById(p._id)}>
+              <button className="border border-black p-1/2" onClick={deleteById(c._id)}>
                 ❌
               </button>{" "}
-              <Link href={`/product/${p._id}`} className="font-bold">
-                {p.name}
+              <Link href={`/customer/${c._id}`} className="font-bold">
+                {c.name}
               </Link>{" "}
-              - {p.description}
+              - {c.interests || "No interests listed"}
             </li>
           ))}
         </ul>
